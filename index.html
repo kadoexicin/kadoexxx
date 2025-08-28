@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kadoex için Özel Site</title>
+<style>
+body {
+  margin:0; padding:0; text-align:center;
+  font-family:'Arial Black', sans-serif;
+  color:white;
+  overflow:hidden;
+  background:black;
+}
+h1,h2,p { margin:20px 0; text-shadow:0 0 5px #0ff,0 0 10px #0ff; }
+button {
+  padding:10px 20px; font-size:20px; margin:15px;
+  cursor:pointer; border:2px solid white; border-radius:10px;
+  background: linear-gradient(90deg,#ff4d4d,#ffb84d);
+  color:white; transition: transform 0.3s, box-shadow 0.3s;
+}
+button:hover { 
+  transform:scale(1.2); 
+  box-shadow:0 0 20px cyan,0 0 40px magenta;
+}
+.typing { display:inline-block; border-right:3px solid white; white-space:nowrap; overflow:hidden; animation:blink-caret 0.8s step-end infinite; }
+canvas { display:block; margin:20px auto; box-shadow:0 0 20px lime; }
+@keyframes blink-caret { from,to{border-color:transparent;}50%{border-color:white;} }
+</style>
+</head>
+<body>
+
+<script>
+if(/Mobi|Android|iPhone/i.test(navigator.userAgent)){
+  document.body.innerHTML = "<h1>⚠ Bu site sadece bilgisayarda açılabilir ⚠</h1>";
+}
+</script>
+
+<canvas id="stars" width="800" height="600" style="position:absolute;top:0;left:0;z-index:-2;"></canvas>
+<canvas id="bgLight" width="800" height="600" style="position:absolute;top:0;left:0;z-index:-1;"></canvas>
+
+<div id="mainContent">
+<h1 class="typing" id="line1"></h1>
+<h2 class="typing" id="line2"></h2>
+<p class="typing" id="line3"></p>
+<p class="typing" id="line4"></p>
+
+<button onclick="surprise()">Sürprizi Göster 🎁</button>
+
+<h2>🎮 Tic Tac Toe 5x5 🎮</h2>
+<canvas id="gameCanvas" width="400" height="400"></canvas>
+
+<button onclick="loveMessage()">💖 Mesajı Göster 💖</button>
+
+<audio autoplay loop>
+  <source src="music.mp3" type="audio/mpeg">
+</audio>
+</div>
+
+<script>
+// Harf harf yazma
+const lines=[
+  "⚡ BU SİTE EDO (EDİZ) TARAFINDAN KADOEX’E ÖZEL HAZIRLANMIŞTIR ⚡",
+  "🌟 Selam Kadoex Abe İyi Akşamlar 🌟",
+  "Bu senin için kodladığım bir site",
+  "🔥 Abi büyük hayranınım, inşallah 1 milyon olursun 🔥"
+];
+const elements=[
+  document.getElementById("line1"),
+  document.getElementById("line2"),
+  document.getElementById("line3"),
+  document.getElementById("line4")
+];
+function typeLine(text, element, delay=50){
+  let i=0;
+  function typing(){ if(i<text.length){ element.innerHTML+=text[i]; i++; setTimeout(typing,delay);} }
+  typing();
+}
+for(let j=0;j<lines.length;j++){ setTimeout(()=>{typeLine(lines[j],elements[j]);}, j*1500); }
+
+// Kayan yıldızlar
+const starCanvas = document.getElementById("stars");
+const sctx = starCanvas.getContext("2d");
+let stars=[];
+for(let i=0;i<150;i++){stars.push({x:Math.random()*800,y:Math.random()*600,r:Math.random()*2+1,speed:Math.random()*2+0.5});}
+function drawStars(){
+  sctx.clearRect(0,0,800,600);
+  for(let i=0;i<stars.length;i++){
+    sctx.fillStyle="white";
+    sctx.beginPath();
+    sctx.arc(stars[i].x,stars[i].y,stars[i].r,0,Math.PI*2);
+    sctx.fill();
+    stars[i].y+=stars[i].speed;
+    if(stars[i].y>600){stars[i].y=0; stars[i].x=Math.random()*800;}
+  }
+  requestAnimationFrame(drawStars);
+}
+drawStars();
+
+// Arka plan ışık patlamaları
+const lightCanvas = document.getElementById("bgLight");
+const lctx = lightCanvas.getContext("2d");
+let lightRadius=50, lightGrowing=true;
+function drawLights(){
+  lctx.clearRect(0,0,800,600);
+  lctx.fillStyle="rgba(0,255,255,0.05)";
+  lctx.beginPath();
+  lctx.arc(400,300,lightRadius,0,Math.PI*2);
+  lctx.fill();
+  if(lightGrowing){ lightRadius+=0.5; if(lightRadius>200) lightGrowing=false; }
+  else{ lightRadius-=0.5; if(lightRadius<50) lightGrowing=true; }
+  requestAnimationFrame(drawLights);
+}
+drawLights();
+
+// Tic Tac Toe 5x5
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+const size=5;
+let board = Array(size).fill(0).map(()=>Array(size).fill(''));
+let current='X';
+let cellSize = canvas.width/size;
+
+canvas.addEventListener("click", function(e){
+  let rect = canvas.getBoundingClientRect();
+  let x = Math.floor((e.clientX-rect.left)/cellSize);
+  let y = Math.floor((e.clientY-rect.top)/cellSize);
+  if(board[y][x]==''){
+    board[y][x]=current;
+    if(checkWin(current)){
+      drawBoard();
+      setTimeout(()=>{ alert(current+" Kazandı!"); resetBoard(); },100);
+    } else { current = current=='X'?'O':'X'; drawBoard(); }
+  }
+});
+
+function drawBoard(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  for(let i=0;i<size;i++){
+    for(let j=0;j<size;j++){
+      ctx.strokeStyle="white";
+      ctx.strokeRect(j*cellSize,i*cellSize,cellSize,cellSize);
+      ctx.fillStyle = board[i][j]=='X'?'cyan':'magenta';
+      ctx.font = (cellSize-10)+"px Arial Black";
+      ctx.textAlign="center"; ctx.textBaseline="middle";
+      ctx.fillText(board[i][j], j*cellSize+cellSize/2, i*cellSize+cellSize/2);
+    }
+  }
+}
+
+function checkWin(player){
+  // Satır ve sütun kontrolü
+  for(let i=0;i<size;i++){
+    if(board[i].every(cell=>cell==player)) return true;
+    if(board.every(row=>row[i]==player)) return true;
+  }
+  // Çaprazlar
+  if(board.every((row,i)=>row[i]==player)) return true;
+  if(board.every((row,i)=>row[size-1-i]==player)) return true;
+  return false;
+}
+
+function resetBoard(){
+  board = Array(size).fill(0).map(()=>Array(size).fill(''));
+  current='X';
+  drawBoard();
+}
+drawBoard();
+
+// Butonlar
+function surprise(){ alert("🎉 Sürpriz! Kadoex harika birisidir! 🎉"); }
+function loveMessage(){ alert("SENİ ÇOK SEVİYOM ABİ 💖"); }
+</script>
+</body>
+</html>
